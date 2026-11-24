@@ -35,6 +35,7 @@
     <span>Label by</span><select id="labelField"></select>
     <button id="label">Label selected</button>
     <button id="clearLabels">Clear labels</button>
+    <label style="display:inline;font-weight:normal"><input type="checkbox" id="autoLabel" checked> Auto-label on selection</label>
   </div>
 
   <label for="filter">Filter rows</label>
@@ -53,7 +54,9 @@
   </details>
 
   <div class="hint" id="ver"></div>
-  <!-- ?v= number forces browsers/Trimble to fetch the new app.js: bump it on every update -->
-  <script src="app.js?v=2.1"></script>
+  <!-- Always fetch the latest app.js (adds a unique ?t= so no cached copy is reused) -->
+  <script>
+    document.write('<script src="app.js?t=' + Date.now() + '"><\/script>');
+  </script>
 </body>
 </html>

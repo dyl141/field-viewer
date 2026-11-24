@@ -1,7 +1,7 @@
 // Field Viewer – Trimble Connect 3D Viewer extension
 // FIRST DRAFT – UNTESTED. Checked against trimble-connect-workspace-api v0.3.40 type definitions.
 
-const VERSION = '2.2';
+const VERSION = '2.3';
 const DEFAULT_FIELDS =
   'Mark=Tekla Common.ASSEMBLY_POS, Product Name, Profile=Product Description, Grade=IFC Material.Material, Finish, Weight';
 const CHUNK = 1000;       // object IDs per getObjectProperties call
@@ -101,6 +101,17 @@ async function render() {
   rows = newRows;
   drawTable();
   showAllProps(first);
+  if ($('autoLabel').checked) queueLabels(() => token === renderToken);
+}
+
+// Labels run one at a time so quick selection changes don't leave stray labels behind
+let labelQueue = Promise.resolve();
+function queueLabels(stillCurrent) {
+  labelQueue = labelQueue.then(async () => {
+    if (!stillCurrent()) return;
+    await clearLabels(true);
+    if (rows.length) await labelSelected(true);
+  }).catch(e => setStatus('Label error: ' + (e.message || e)));
 }
 
 function visibleRows() {
@@ -163,7 +174,7 @@ async function colourBy() {
 
 // --- Floating 3D labels (text markups) --------------------------------------
 // getObjectBoundingBoxes -> metres; markup picks -> millimetres, so multiply by 1000.
-async function labelSelected() {
+async function labelSelected(quiet) {
   const idx = Number($('labelField').value);
   const field = wanted()[idx];
   if (!field) return setStatus('Add at least one field.');
@@ -188,16 +199,20 @@ async function labelSelected() {
       });
     });
   }
-  if (!markups.length) return setStatus(`No "${field.header}" values to label.`);
+  if (!markups.length) return quiet ? null : setStatus(`No "${field.header}" values to label.`);
   const added = await API.markup.addTextMarkup(markups);
   labelIds.push(...added.map(m => m.id).filter(id => id != null));
-  setStatus(`Added ${added.length} label(s)` + (rows.length > MAX_LABELS ? ` (limited to ${MAX_LABELS})` : '') + '.');
+  if (!quiet) setStatus(`Added ${added.length} label(s)` + (rows.length > MAX_LABELS ? ` (limited to ${MAX_LABELS})` : '') + '.');
 }
 
-async function clearLabels() {
-  if (labelIds.length) await API.markup.removeMarkups(labelIds);
-  labelIds = [];
-  setStatus('Labels cleared.');
+async function clearLabels(quiet) {
+  const ids = labelIds; labelIds = [];
+  if (ids.length) await API.markup.removeMarkups(ids);
+  if (!quiet) setStatus('Labels cleared.');
+}
+
+function queueLabels2Clear() {
+  labelQueue = labelQueue.then(() => clearLabels(true)).catch(() => {});
 }
 
 // --- CSV export / copy ------------------------------------------------------
@@ -254,7 +269,13 @@ async function copyTable() {
     await API.viewer.setObjectState(undefined, { color: 'reset' });   // undefined = all objects
     setStatus('Colours cleared.');
   });
-  $('label').onclick = safe(labelSelected);
-  $('clearLabels').onclick = safe(clearLabels);
+  $('label').onclick = safe(() => labelSelected());
+  $('clearLabels').onclick = safe(() => clearLabels());
+  try { $('autoLabel').checked = localStorage.getItem('fv.autoLabel') !== '0'; } catch (e) {}
+  $('autoLabel').onchange = () => {
+    try { localStorage.setItem('fv.autoLabel', $('autoLabel').checked ? '1' : '0'); } catch (e) {}
+    if ($('autoLabel').checked) queueLabels(() => true); else queueLabels2Clear();
+  };
+  $('labelField').onchange = () => { if ($('autoLabel').checked) queueLabels(() => true); };
   render();
 })();
