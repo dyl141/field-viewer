@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Field Viewer</title>
+  <!-- Trimble Connect Workspace API (loads the global "TrimbleConnectWorkspace") -->
+  <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
+  <style>
+    body   { font: 13px Arial, sans-serif; margin: 8px; color: #222; }
+    label  { font-weight: bold; display: block; margin-bottom: 4px; }
+    input  { width: 100%; box-sizing: border-box; padding: 4px; margin-bottom: 6px; }
+    button { margin: 0 4px 6px 0; padding: 4px 8px; cursor: pointer; }
+    table  { border-collapse: collapse; width: 100%; margin-top: 6px; }
+    th, td { border: 1px solid #ccc; padding: 3px 5px; text-align: left; vertical-align: top; }
+    th     { background: #f2f2f2; }
+    #status{ color: #666; font-size: 12px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+  <label for="fields">Fields (comma separated: Property or Set.Property)</label>
+  <input id="fields" value="Mark,Profile,Grade,Fire Rating,Finish,Weight">
+  <button id="colour">Colour by first field</button>
+  <button id="reset">Clear colours</button>
+  <div id="status">Connecting to Trimble Connect…</div>
+  <div id="out"></div>
+  <script src="app.js"></script>
+</body>
+</html>

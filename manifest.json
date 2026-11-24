@@ -1,0 +1,9 @@
+{
+  "title": "Field Viewer",
+  "url": "https://dyl141.github.io/field-viewer/index.html",
+  "infoUrl": "https://github.com/dyl141/field-viewer",
+  "description": "Shows chosen property fields for selected objects and colours the model by a field",
+  "icon": "https://dyl141.github.io/field-viewer/icon.png",
+  "enabled": true,
+  "extensionType": ["3dviewer"]
+}
