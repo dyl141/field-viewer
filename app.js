@@ -1,7 +1,7 @@
 // Field Viewer – Trimble Connect 3D Viewer extension
 // FIRST DRAFT – UNTESTED. Checked against trimble-connect-workspace-api v0.3.40 type definitions.
 
-const VERSION = '2.3';
+const VERSION = '2.4';
 const DEFAULT_FIELDS =
   'Mark=Tekla Common.ASSEMBLY_POS, Product Name, Profile=Product Description, Grade=IFC Material.Material, Finish, Weight';
 const CHUNK = 1000;       // object IDs per getObjectProperties call
@@ -101,8 +101,13 @@ async function render() {
   rows = newRows;
   drawTable();
   showAllProps(first);
-  if ($('autoLabel').checked) queueLabels(() => token === renderToken);
+  const sig = JSON.stringify([$('labelField').value, rows.map(r => r.modelId + ':' + r.id + ':' + r.values.join('|'))]);
+  if ($('autoLabel').checked && sig !== lastLabelSig) {
+    lastLabelSig = sig;
+    queueLabels(() => token === renderToken);
+  }
 }
+let lastLabelSig = '';
 
 // Labels run one at a time so quick selection changes don't leave stray labels behind
 let labelQueue = Promise.resolve();
@@ -193,7 +198,7 @@ async function labelSelected(quiet) {
       const x = (b.min.x + b.max.x) / 2 * 1000, y = (b.min.y + b.max.y) / 2 * 1000, z = b.max.z * 1000;
       markups.push({
         text: String(text),
-        start: { positionX: x, positionY: y, positionZ: z, modelId, objectId: r.id },
+        start: { positionX: x, positionY: y, positionZ: z },
         end:   { positionX: x, positionY: y, positionZ: z + 500 },   // label 500 mm above the top
         color: { r: 0, g: 99, b: 163, a: 255 }
       });
@@ -256,8 +261,12 @@ async function copyTable() {
   $('copy').onclick = safe(copyTable);
 
   try {
-    API = await TrimbleConnectWorkspace.connect(window.parent, (event) => {
-      if (event === 'viewer.onSelectionChanged') render();
+    let timer;
+    API = await TrimbleConnectWorkspace.connect(window.parent, (event, data) => {
+      if (event !== 'viewer.onSelectionChanged') return;
+      if (data && data.origin && data.origin.isSelf) return;   // caused by this panel – ignore
+      clearTimeout(timer);
+      timer = setTimeout(render, 250);                         // wait for clicking to settle
     }, 30000);
   } catch (e) {
     return setStatus('Could not connect to Trimble Connect: ' + (e.message || e));
@@ -270,12 +279,12 @@ async function copyTable() {
     setStatus('Colours cleared.');
   });
   $('label').onclick = safe(() => labelSelected());
-  $('clearLabels').onclick = safe(() => clearLabels());
+  $('clearLabels').onclick = safe(() => { lastLabelSig = ''; return clearLabels(); });
   try { $('autoLabel').checked = localStorage.getItem('fv.autoLabel') !== '0'; } catch (e) {}
   $('autoLabel').onchange = () => {
     try { localStorage.setItem('fv.autoLabel', $('autoLabel').checked ? '1' : '0'); } catch (e) {}
-    if ($('autoLabel').checked) queueLabels(() => true); else queueLabels2Clear();
+    lastLabelSig = ''; if ($('autoLabel').checked) render(); else queueLabels2Clear();
   };
-  $('labelField').onchange = () => { if ($('autoLabel').checked) queueLabels(() => true); };
+  $('labelField').onchange = () => { lastLabelSig = ''; if ($('autoLabel').checked) render(); };
   render();
 })();
