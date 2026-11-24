@@ -1,9 +1,9 @@
 // Field Viewer – Trimble Connect 3D Viewer extension
 // FIRST DRAFT – UNTESTED. Checked against trimble-connect-workspace-api v0.3.40 type definitions.
 
-const VERSION = '2.1';
+const VERSION = '2.2';
 const DEFAULT_FIELDS =
-  'Mark=Tekla Common.ASSEMBLY1_POS, Product Name, Profile=Product Description, Grade=IFC Material.Material, Finish, Weight';
+  'Mark=Tekla Common.ASSEMBLY_POS, Product Name, Profile=Product Description, Grade=IFC Material.Material, Finish, Weight';
 const CHUNK = 1000;       // object IDs per getObjectProperties call
 const MAX_LABELS = 200;   // safety limit for text markups
 
@@ -17,7 +17,7 @@ const setStatus = t => { $('status').textContent = t; };
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-// Normalise names so "Tekla Common.ASSEMBLY1_POS" matches "tekla_common.assembly1_pos" etc.
+// Normalise names so "Tekla Common.ASSEMBLY_POS" matches "tekla_common.assembly1_pos" etc.
 const norm = s => String(s).toLowerCase().replace(/[\s_]/g, '');
 
 // --- Field list -------------------------------------------------------------
@@ -67,7 +67,9 @@ function flatten(obj) {
   }
   return m;
 }
-const valueOf = (m, key) => m[norm(key)];
+// Tidy numbers (e.g. 98.11999999 -> 98.12)
+const tidy = v => (typeof v === 'number' && !Number.isInteger(v)) ? Math.round(v * 100) / 100 : v;
+const valueOf = (m, key) => tidy(m[norm(key)]);
 
 // getObjectProperties(modelId, objectRuntimeIds[]) -> ObjectProperties[], fetched in chunks
 async function getProps(modelId, ids) {
