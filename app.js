@@ -1,11 +1,11 @@
 // Field Viewer – Trimble Connect 3D Viewer extension
 // FIRST DRAFT – UNTESTED. Checked against trimble-connect-workspace-api v0.3.40 type definitions.
 
-const VERSION = '2.4';
+const VERSION = '2.5';
 const DEFAULT_FIELDS =
   'Mark=Tekla Common.ASSEMBLY_POS, Product Name, Profile=Product Description, Grade=IFC Material.Material, Finish, Weight';
 const CHUNK = 1000;       // object IDs per getObjectProperties call
-const MAX_LABELS = 200;   // safety limit for text markups
+const MAX_LABELS = 10;    // safety limit for text markups
 
 let API;
 let rows = [];            // [{ modelId, id, values: [..] }] for the current selection
