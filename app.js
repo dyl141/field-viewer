@@ -1,8 +1,9 @@
 // Field Viewer – Trimble Connect 3D Viewer extension
 // FIRST DRAFT – UNTESTED. Checked against trimble-connect-workspace-api v0.3.40 type definitions.
 
+const VERSION = '2.1';
 const DEFAULT_FIELDS =
-  'Mark=Tekla Common.ASSEMBLY1_POS, Product Name, Profile, Grade=IFC Material.Material, Finish, Weight';
+  'Mark=Tekla Common.ASSEMBLY1_POS, Product Name, Profile=Product Description, Grade=IFC Material.Material, Finish, Weight';
 const CHUNK = 1000;       // object IDs per getObjectProperties call
 const MAX_LABELS = 200;   // safety limit for text markups
 
@@ -57,10 +58,12 @@ function flatten(obj) {
   (obj.properties || []).forEach(set =>
     (set.properties || []).forEach(p => add(set.name || '', p.name, p.value)));
   // Product info sits outside the property sets – expose it as "Product.Name" and "Product Name"
+  // (matches Trimble's own panel labels: "Product Name", "Product Description", "Product Object Type")
   if (obj.product) {
-    if (obj.product.name != null) { add('Product', 'Name', obj.product.name); m[norm('Product Name')] ??= obj.product.name; }
-    if (obj.product.description != null) add('Product', 'Description', obj.product.description);
-    if (obj.product.objectType != null) add('Product', 'ObjectType', obj.product.objectType);
+    const P = obj.product;
+    if (P.name != null)        { add('Product', 'Name', P.name);               m[norm('Product Name')] ??= P.name; }
+    if (P.description != null) { add('Product', 'Description', P.description); m[norm('Product Description')] ??= P.description; }
+    if (P.objectType != null)  { add('Product', 'ObjectType', P.objectType);    m[norm('Product Object Type')] ??= P.objectType; }
   }
   return m;
 }
@@ -224,6 +227,7 @@ async function copyTable() {
 
 // --- Start-up ---------------------------------------------------------------
 (async () => {
+  $('ver').textContent = 'Field Viewer v' + VERSION;
   loadFields();
   fillDropdowns();
   const safe = fn => () => fn().catch(e => setStatus('Error: ' + (e.message || e)));
