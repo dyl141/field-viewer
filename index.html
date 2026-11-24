@@ -6,23 +6,52 @@
   <!-- Trimble Connect Workspace API (loads the global "TrimbleConnectWorkspace") -->
   <script src="https://components.connect.trimble.com/trimble-connect-workspace-api/index.js"></script>
   <style>
-    body   { font: 13px Arial, sans-serif; margin: 8px; color: #222; }
-    label  { font-weight: bold; display: block; margin-bottom: 4px; }
-    input  { width: 100%; box-sizing: border-box; padding: 4px; margin-bottom: 6px; }
-    button { margin: 0 4px 6px 0; padding: 4px 8px; cursor: pointer; }
-    table  { border-collapse: collapse; width: 100%; margin-top: 6px; }
-    th, td { border: 1px solid #ccc; padding: 3px 5px; text-align: left; vertical-align: top; }
-    th     { background: #f2f2f2; }
-    #status{ color: #666; font-size: 12px; margin: 4px 0; }
+    body    { font: 13px Arial, sans-serif; margin: 8px; color: #222; }
+    label   { font-weight: bold; display: block; margin: 6px 0 3px; }
+    input, select { box-sizing: border-box; padding: 4px; }
+    #fields, #filter { width: 100%; }
+    .row    { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 4px 0; }
+    button  { padding: 4px 8px; cursor: pointer; }
+    table   { border-collapse: collapse; width: 100%; margin-top: 6px; }
+    th, td  { border: 1px solid #ccc; padding: 3px 5px; text-align: left; vertical-align: top; }
+    th      { background: #f2f2f2; position: sticky; top: 0; }
+    #status { color: #666; font-size: 12px; margin: 4px 0; }
+    .hint   { color: #888; font-size: 11px; }
+    details { margin-top: 8px; }
+    #allProps { font: 11px Consolas, monospace; white-space: pre-wrap; max-height: 300px; overflow: auto; background: #fafafa; border: 1px solid #ddd; padding: 4px; }
   </style>
 </head>
 <body>
-  <label for="fields">Fields (comma separated: Property or Set.Property)</label>
-  <input id="fields" value="Mark,Profile,Grade,Fire Rating,Finish,Weight">
-  <button id="colour">Colour by first field</button>
-  <button id="reset">Clear colours</button>
+  <label for="fields">Fields</label>
+  <input id="fields">
+  <div class="hint">Comma separated. Use <b>Property</b>, <b>Set.Property</b>, or <b>Header=Set.Property</b>. Not case sensitive. <a href="#" id="defaults">Restore defaults</a></div>
+
+  <div class="row">
+    <span>Colour by</span><select id="colourField"></select>
+    <button id="colour">Colour</button>
+    <button id="reset">Clear colours</button>
+  </div>
+  <div class="row">
+    <span>Label by</span><select id="labelField"></select>
+    <button id="label">Label selected</button>
+    <button id="clearLabels">Clear labels</button>
+  </div>
+
+  <label for="filter">Filter rows</label>
+  <input id="filter" placeholder="Type to filter the table, e.g. S355">
+  <div class="row">
+    <button id="csv">Export CSV</button>
+    <button id="copy">Copy table (paste into Excel)</button>
+  </div>
+
   <div id="status">Connecting to Trimble Connect…</div>
   <div id="out"></div>
+
+  <details id="propsBox">
+    <summary>Show all properties of first selected object (to find exact names)</summary>
+    <div id="allProps">Select an object.</div>
+  </details>
+
   <script src="app.js"></script>
 </body>
 </html>
